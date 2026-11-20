@@ -1,0 +1,8 @@
+name = "chatreads"
+pages_build_output_dir = "."
+compatibility_date = "2024-11-01"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "chatreads-db"
+database_id = "354fe10e-e39d-4a8f-afc5-4381f6d3688d"

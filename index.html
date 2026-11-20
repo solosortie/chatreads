@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#FBF1E4">
+<meta name="color-scheme" content="light">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Chat's Bookshelf">
+<meta name="description" content="Chat's personal bookshelf">
+<title>Chat's Bookshelf</title>
+
+<link rel="icon" href="/icons/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<link rel="manifest" href="/manifest.webmanifest">
+
+<link rel="preload" href="/fonts/fraunces.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/nunito.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preconnect" href="https://covers.openlibrary.org" crossorigin>
+<link rel="stylesheet" href="/styles.css">
+</head>
+<body class="booting">
+
+<!-- ============ PASSWORD GATE ============ -->
+<div id="authGate" hidden>
+  <div class="auth-card">
+    <svg class="auth-mark" viewBox="0 0 64 64" aria-hidden="true">
+      <rect x="6" y="46" width="52" height="7" rx="2" fill="#B0673D"/>
+      <rect x="10" y="18" width="9" height="28" rx="2" fill="#E3A6A0"/>
+      <rect x="21" y="12" width="8" height="34" rx="2" fill="#8FA888"/>
+      <rect x="31" y="20" width="10" height="26" rx="2" fill="#EFC75E"/>
+      <rect x="43" y="15" width="7" height="31" rx="2" fill="#9DBEDD"/>
+    </svg>
+    <h1 class="auth-title serif">Chat's Bookshelf</h1>
+    <form class="auth-form" id="authForm" autocomplete="off">
+      <input type="password" id="passwordInput" placeholder="Password" inputmode="text"
+             enterkeyhint="go" aria-label="Password" required>
+      <button type="submit" id="authSubmit">Enter</button>
+      <div class="auth-msg" id="authMsg" role="alert" aria-live="polite"></div>
+    </form>
+  </div>
+</div>
+
+<!-- ============ APP ============ -->
+<div id="app" hidden>
+  <div class="wrap">
+    <header class="top">
+      <h1 class="serif">Chat's Bookshelf</h1>
+      <div class="top-meta">
+        <span class="sync" id="syncPill" data-state="saved" role="status" aria-live="polite">
+          <i aria-hidden="true"></i><span id="syncText">Saved</span>
+        </span>
+        <span class="count" id="countLabel">0 books</span>
+      </div>
+    </header>
+
+    <div class="search-row" id="searchRow">
+      <svg class="search-ico" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="8.5" cy="8.5" r="5.5"/><path d="M13 13l4 4"/></svg>
+      <input type="search" id="searchInput" placeholder="Search by title or author" autocomplete="off"
+             enterkeyhint="search" role="combobox" aria-expanded="false" aria-controls="resultsBox"
+             aria-autocomplete="list" spellcheck="false">
+      <div class="results" id="resultsBox" role="listbox" aria-label="Search results"></div>
+    </div>
+
+    <div class="filters" id="filters">
+      <div class="chips" role="group" aria-label="Filter books">
+        <button class="filter-chip active" data-filter="all" type="button">All <b></b></button>
+        <button class="filter-chip" data-filter="reading" type="button">Reading <b></b></button>
+        <button class="filter-chip" data-filter="read" type="button">Read <b></b></button>
+        <button class="filter-chip" data-filter="want" type="button">Want to read <b></b></button>
+      </div>
+
+      <div class="sort-wrap">
+        <button class="sort-trigger" id="sortTrigger" type="button" aria-haspopup="menu" aria-expanded="false">
+          <span id="sortLabel">Recently added</span>
+          <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M2.5 4.5L6 8l3.5-3.5"/></svg>
+        </button>
+        <div class="sort-menu" id="sortMenu" role="menu">
+          <button class="sort-option active" data-sort="added" role="menuitemradio" type="button">Recently added</button>
+          <button class="sort-option" data-sort="title" role="menuitemradio" type="button">Title</button>
+          <button class="sort-option" data-sort="author" role="menuitemradio" type="button">Author</button>
+          <button class="sort-option" data-sort="rating" role="menuitemradio" type="button">Rating</button>
+        </div>
+      </div>
+    </div>
+
+    <main id="shelfArea" class="case" aria-label="Your bookshelf"></main>
+  </div>
+</div>
+
+<!-- ============ BOOK DETAIL ============ -->
+<div class="overlay" id="overlay"></div>
+<div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle" aria-hidden="true" tabindex="-1">
+  <div class="sheet-handle" id="sheetHandle"><span></span></div>
+  <button class="close-x" id="closeSheet" type="button" aria-label="Close">&times;</button>
+  <div class="sheet-body">
+    <div class="sheet-cover-col">
+      <div class="stage">
+        <div class="book3d" id="book3d">
+          <div class="face front">
+            <img id="sheetCover" alt="" decoding="async" draggable="false">
+            <div class="cover-fallback" id="coverFallback" aria-hidden="true">
+              <span class="fb-title serif" id="fbTitle"></span>
+              <span class="fb-rule"></span>
+              <span class="fb-author" id="fbAuthor"></span>
+            </div>
+            <i class="gloss"></i>
+          </div>
+          <div class="face back"></div>
+          <div class="face side-l"></div>
+          <div class="face side-r"></div>
+          <div class="face side-t"></div>
+        </div>
+        <div class="book-shadow"></div>
+      </div>
+    </div>
+
+    <div class="sheet-info">
+      <h2 class="serif" id="sheetTitle"></h2>
+      <div class="author" id="sheetAuthor"></div>
+      <div class="meta" id="sheetMeta"></div>
+
+      <span class="field-label">Status</span>
+      <div class="status-picker" id="statusPicker" role="group" aria-label="Reading status">
+        <button class="status-btn" data-status="want" type="button">Want to read</button>
+        <button class="status-btn" data-status="reading" type="button">Reading</button>
+        <button class="status-btn" data-status="read" type="button">Read</button>
+      </div>
+
+      <span class="field-label">Rating</span>
+      <div class="stars" id="starsRow" role="group" aria-label="Rating">
+        <button class="star" data-val="1" type="button" aria-label="1 star">&#9733;</button>
+        <button class="star" data-val="2" type="button" aria-label="2 stars">&#9733;</button>
+        <button class="star" data-val="3" type="button" aria-label="3 stars">&#9733;</button>
+        <button class="star" data-val="4" type="button" aria-label="4 stars">&#9733;</button>
+        <button class="star" data-val="5" type="button" aria-label="5 stars">&#9733;</button>
+      </div>
+
+      <label class="field-label" for="noteField">Note</label>
+      <textarea class="note" id="noteField" rows="3" maxlength="5000"
+                placeholder="A thought, a favorite line, why you picked it up…"></textarea>
+
+      <button class="remove-btn" id="removeBtn" type="button">Remove from shelf</button>
+    </div>
+  </div>
+</div>
+
+<div class="toasts" id="toasts" aria-live="polite"></div>
+
+<noscript><p style="padding:24px;font-family:sans-serif">Chat's Bookshelf needs JavaScript to run.</p></noscript>
+<script src="/app.js" defer></script>
+</body>
+</html>
